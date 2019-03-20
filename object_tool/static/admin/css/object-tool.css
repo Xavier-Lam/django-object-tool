@@ -1,0 +1,7 @@
+.object-tools form { display: inline }
+.object-tools a>button {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+}
