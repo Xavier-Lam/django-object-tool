@@ -5,3 +5,6 @@
     color: #fff;
     cursor: pointer;
 }
+.object-tools a>button:focus {
+    outline: none
+}

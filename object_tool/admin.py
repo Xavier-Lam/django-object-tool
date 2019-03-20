@@ -2,11 +2,14 @@
 from __future__ import unicode_literals
 
 from collections import OrderedDict
-from functools import wraps
+from functools import update_wrapper, wraps
+import re
 
+from django.conf.urls import url
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.options import csrf_protect_m
 from django.http import response
+from django.urls import resolve
 from django.utils.text import capfirst
 import six
 
@@ -20,17 +23,48 @@ class CustomObjectToolModelAdminMixin(object):
     """
 
     object_tools = []
-    change_list_object_tools = []
+    """object tools for both change list view and change view"""
+
+    changelist_object_tools = []
+    """object tools only for change list view"""
+
+    change_object_tools = []
+    """object tools only for change view"""
 
     @property
     def _base_change_list_template(self):
-        opts = self.model._meta
-        app_label = opts.app_label
         parent = super(CustomObjectToolModelAdminMixin, self)
         return getattr(parent, "change_list_template", None)\
             or "admin/change_list.html"
 
-    change_list_template = "admin/object_tool/change_list.html"
+    change_list_template = "admin/object_tool/object-tool-items.html"
+
+    @property
+    def _base_change_form_template(self):
+        parent = super(CustomObjectToolModelAdminMixin, self)
+        return getattr(parent, "change_form_template", None)\
+            or "admin/change_form.html"
+
+    change_form_template = "admin/object_tool/object-tool-items.html"
+
+    def get_urls(self):
+        urlpatterns = super(CustomObjectToolModelAdminMixin, self).get_urls()
+        
+        def wrap(view):
+            def wrapper(*args, **kwargs):
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+            wrapper.model_admin = self
+            return update_wrapper(wrapper, view)
+
+        info = self.model._meta.app_label, self.model._meta.model_name
+        urlpatterns = [
+            url(
+                r"^objecttool/$",
+                wrap(self.object_tool_view), 
+                name="%s_%s_objecttool" % info
+            )
+        ] + urlpatterns
+        return urlpatterns
 
     def _get_base_object_tools(self, request):
         """
@@ -38,17 +72,27 @@ class CustomObjectToolModelAdminMixin(object):
         """
         object_tools = []
 
+        url_name = resolve(request.path_info).url_name
+        match = re.search("_([^_]+?)$", url_name)
+        view = match.group(1)
+        if view == "objecttool":
+            url_name = resolve(
+                request.POST["object-tool-referrer-url"]).url_name
+            match = re.search("_([^_]+?)$", url_name)
+            view = match.group(1)
+
         # Gather object tools from the admin site first
         if isinstance(self.admin_site, CustomObjectToolAdminSiteMixin):
-            for (name, func) in self.admin_site.object_tools:
+            for (name, func) in self.admin_site.get_object_tools(view):
                 description = getattr(
                     func, "short_description", name.replace("_", " "))
                 object_tools.append((func, name, description))
 
         # Then gather them from the model admin and all parent classes
         for klass in self.__class__.mro()[::-1]:
-            # TODO: filter object tools by view
-            class_tools = getattr(klass, "object_tools", []) or []
+            class_tools = list(getattr(klass, "object_tools", None) or [])
+            class_tools.extend(getattr(
+                klass, "{view}_object_tools".format(view=view), None) or [])
             object_tools.extend(map(self.get_object_tool, class_tools))
 
         return self._filter_object_tools_by_permissions(request, object_tools)
@@ -128,30 +172,50 @@ class CustomObjectToolModelAdminMixin(object):
         if isinstance(rv, response.HttpResponseBase):
             return rv
         else:
-            return response.HttpResponseRedirect(request.get_full_path())
+            redirect_url = request.POST["object-tool-referrer-url"]
+            return response.HttpResponseRedirect(redirect_url)
+
+    @csrf_protect_m
+    def object_tool_view(self, request):
+        # handle object tool behaviors
+        if request.method != "POST":
+            return response.HttpResponseNotAllowed()
+
+        if "object-tool" not in request.POST:
+            return response.HttpResponseBadRequest()
+
+        if request.POST["object-tool"] not in self.get_object_tools(request):
+            return response.HttpResponseForbidden()
+        
+        return self.response_object_tool(request)
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
-        # update context
-        object_tools = self.get_object_tools(request)
-        extra_context = extra_context or {}
+        extra_context = self._prepare_object_tool_view(request, extra_context)
         extra_context.update(
-            object_tools=object_tools.values(),
-            base_change_list_template=self._base_change_list_template
+            object_tool_base_template=self._base_change_list_template
         )
-
-        rv = super(CustomObjectToolModelAdminMixin, self).changelist_view(
+        return super(CustomObjectToolModelAdminMixin, self).changelist_view(
             request, extra_context)
 
-        # handle object tool behaviors
-        if request.method == "POST"\
-            and "object-tool" in request.POST\
-            and request.POST["object-tool"] in object_tools\
-            and '_save' not in request.POST:
+    @csrf_protect_m
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        extra_context = self._prepare_object_tool_view(request, extra_context)
+        extra_context.update(
+            object_tool_base_template=self._base_change_form_template
+        )
+        return super(CustomObjectToolModelAdminMixin, self).changeform_view(
+            request, object_id, form_url, extra_context)
 
-            rv = self.response_object_tool(request)
-
-        return rv
+    def _prepare_object_tool_view(self, request, extra_context=None):
+        # update context
+        extra_context = extra_context or {}
+        info = self.model._meta.app_label, self.model._meta.model_name
+        extra_context.update(
+            object_tools=self.get_object_tools(request).values(),
+            object_tool_referrer_url=request.get_full_path()
+        )
+        return extra_context
 
 
 class CustomObjectToolModelAdmin(CustomObjectToolModelAdminMixin, ModelAdmin):

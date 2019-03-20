@@ -1,19 +1,27 @@
 # Django-object-tool
 
+[![PyPI](https://img.shields.io/pypi/v/django-object-tool.svg)](https://pypi.org/project/django-object-tool)
+[![Build Status](https://travis-ci.org/Xavier-Lam/django-object-tool.svg?branch=master)](https://travis-ci.org/Xavier-Lam/django-object-tool)
+
 **django-object-tool** let you can customize django's object-tools bar. You can add actions to object-tools bar beside add-object button. The definition of object-tool action like django's default action.
+
+> This is a pre alpha version without any unittest, there may have serveral problems and not compatible with some django or python versions.
 
 ![](docs/static/images/example.jpg?raw=true)
 
-- [Quick Start](#quick-start)
-  - [Installation](#installation)
-  - [Write your first admin](#write-your-first-admin)
-  - [Shortcut for hyperlink](#shortcut-for-hyperlink)
-- [Compatibilities](#compatibilities)
-  - [django-import-export](#django-import-export)
-- [Example app](#example-app)
-- [TODOS](#todos)
-- [Change logs](#change-logs)
-  - [0.0.1](#001)
+- [Django-object-tool](#django-object-tool)
+  - [Quick Start](#quick-start)
+    - [Installation](#installation)
+    - [Write your first admin](#write-your-first-admin)
+    - [Specific view only object tools](#specific-view-only-object-tools)
+    - [Site wide object tools](#site-wide-object-tools)
+    - [Shortcut for hyperlink](#shortcut-for-hyperlink)
+  - [Compatibilities](#compatibilities)
+    - [django-import-export](#django-import-export)
+  - [Example app](#example-app)
+  - [TODOS](#todos)
+  - [Change logs](#change-logs)
+    - [0.0.1](#001)
 
 ## Quick Start
 ### Installation
@@ -50,6 +58,16 @@ The object tool takes a request and an optional object, when this tool called in
             else:
                 self.get_queryset(request).all().update(some_property="value")
 
+### Specific view only object tools
+    from object_tool import CustomObjectToolModelAdminMixin
+
+    class SomeModelAdmin(CustomObjectToolModelAdminMixin, admin.ModelAdmin):
+        changelist_object_tools = ("changelist_view_only_action",)
+        change_object_tools = ("change_view_only_action", )
+
+### Site wide object tools
+    admin_site.add_object_tool(lambda modeladmin, request, obj=None: "some action")
+
 ### Shortcut for hyperlink
     from object_tool import CustomObjectToolModelAdminMixin, link_object_tool
 
@@ -59,8 +77,6 @@ The object tool takes a request and an optional object, when this tool called in
         forkme = link_object_tool(
             "https://github.com/Xavier-Lam/django-object-tool",
             "Fork me on github")
-
-
 
 ## Compatibilities
 ### django-import-export
@@ -78,7 +94,6 @@ We provided an example app
 Then visit ***http://127.0.0.1:8000/admin*** and login as super admin by using account ***admin*** with password ***123456***.
 
 ## TODOS
-* separate object tools definition in changelist view and change view
 * patch for ModelAdmin
 * unittests
 * documentation

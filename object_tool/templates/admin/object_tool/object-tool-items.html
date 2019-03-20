@@ -1,5 +1,6 @@
-{% extends base_change_list_template %}
-{% load i18n static %}
+{% extends object_tool_base_template %}
+
+{% load i18n admin_urls static %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -7,8 +8,9 @@
 {% endblock %}
 
 {% block object-tools-items %}
-<form method="POST">
+<form action="{% url opts|admin_urlname:'objecttool' %}" method="POST">
     {% csrf_token %}
+    <input name="object-tool-referrer-url" type="hidden" value="{{ object_tool_referrer_url }}" />
     {% for object_tool in object_tools %}
     <li>
         <a href="javascript:;">

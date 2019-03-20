@@ -8,7 +8,8 @@ from .models import User
 
 
 class UserAdmin(CustomObjectToolModelAdminMixin, admin.ModelAdmin):
-    object_tools = ("forkme", "make_handsome")
+    object_tools = ("make_handsome",)
+    changelist_object_tools = ("forkme", )
 
     list_display = ("name", "handsome")
 
