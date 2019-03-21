@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from ..sites import CustomObjectToolAdminSite
 from .base import ObjectToolTestCase
 
+
 class SiteTestCase(ObjectToolTestCase):
     def test_register_tool(self):
         site = CustomObjectToolAdminSite()

@@ -1,0 +1,11 @@
+{% load i18n admin_urls %}
+
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst|escape }}</a>
+{% if obj.pk %}
+&rsaquo; <a href="{% url opts|admin_urlname:'change' obj.pk|admin_urlquote %}">{{ obj|truncatewords:"18" }}</a>
+{% endif %}
+&rsaquo; {% trans object_tool.1.short_description %}
+</div>

@@ -2,18 +2,19 @@
 from __future__ import unicode_literals
 
 from collections import OrderedDict
-from functools import update_wrapper, wraps
+from functools import update_wrapper
 import re
 
 from django.conf.urls import url
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.options import csrf_protect_m
+from django.contrib.admin.utils import unquote
 from django.http import response
 from django.urls import resolve
 from django.utils.text import capfirst
-import six
 
 from .sites import CustomObjectToolAdminSiteMixin
+from .utils import object_tool_context
 
 
 class CustomObjectToolModelAdminMixin(object):
@@ -49,7 +50,7 @@ class CustomObjectToolModelAdminMixin(object):
 
     def get_urls(self):
         urlpatterns = super(CustomObjectToolModelAdminMixin, self).get_urls()
-        
+
         def wrap(view):
             def wrapper(*args, **kwargs):
                 return self.admin_site.admin_view(view)(*args, **kwargs)
@@ -59,12 +60,21 @@ class CustomObjectToolModelAdminMixin(object):
         info = self.model._meta.app_label, self.model._meta.model_name
         urlpatterns = [
             url(
-                r"^objecttool/$",
-                wrap(self.object_tool_view), 
+                r"^objecttool/(.+)?$",
+                wrap(self.object_tool_view),
                 name="%s_%s_objecttool" % info
             )
         ] + urlpatterns
         return urlpatterns
+
+    def _get_request_view(self, request):
+        """util for get request view"""
+        url_name = resolve(request.path_info).url_name
+        match = re.search("_([^_]+?)$", url_name)
+        view = match.group(1)
+        if view == "objecttool":
+            view = request.POST["object-tool-referrer-view"]
+        return view
 
     def _get_base_object_tools(self, request):
         """
@@ -72,14 +82,7 @@ class CustomObjectToolModelAdminMixin(object):
         """
         object_tools = []
 
-        url_name = resolve(request.path_info).url_name
-        match = re.search("_([^_]+?)$", url_name)
-        view = match.group(1)
-        if view == "objecttool":
-            url_name = resolve(
-                request.POST["object-tool-referrer-url"]).url_name
-            match = re.search("_([^_]+?)$", url_name)
-            view = match.group(1)
+        view = self._get_request_view(request)
 
         # Gather object tools from the admin site first
         if isinstance(self.admin_site, CustomObjectToolAdminSiteMixin):
@@ -134,6 +137,7 @@ class CustomObjectToolModelAdminMixin(object):
         callable, or the name of a method on the ModelAdmin.  Return is a
         tuple of (callable, name, description).
         """
+        func = None
         # If the object tool is a callable, just use it.
         if callable(object_tool):
             func = object_tool
@@ -150,10 +154,10 @@ class CustomObjectToolModelAdminMixin(object):
             try:
                 func = self.admin_site.get_object_tool(object_tool)
             except KeyError:
-                return None
-        
-        else:
-            return None
+                pass
+
+        if func is None:
+            raise ValueError("object tool {0} not found".format(object_tool))
 
         if hasattr(func, "short_description"):
             description = func.short_description
@@ -176,18 +180,22 @@ class CustomObjectToolModelAdminMixin(object):
             return response.HttpResponseRedirect(redirect_url)
 
     @csrf_protect_m
-    def object_tool_view(self, request):
+    def object_tool_view(self, request, object_id=None):
         # handle object tool behaviors
-        if request.method != "POST":
-            return response.HttpResponseNotAllowed()
-
         if "object-tool" not in request.POST:
             return response.HttpResponseBadRequest()
 
-        if request.POST["object-tool"] not in self.get_object_tools(request):
+        name = request.POST["object-tool"]
+        if name not in self.get_object_tools(request):
             return response.HttpResponseForbidden()
-        
-        return self.response_object_tool(request)
+
+        object_tool = self.get_object_tool(name)
+        allow_get = not getattr(object_tool, "allow_get", False)
+        if not allow_get and request.method != "POST":
+            return response.HttpResponseNotAllowed()
+
+        obj = object_id and self.get_object(request, unquote(object_id))
+        return self.response_object_tool(request, obj)
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
@@ -210,10 +218,12 @@ class CustomObjectToolModelAdminMixin(object):
     def _prepare_object_tool_view(self, request, extra_context=None):
         # update context
         extra_context = extra_context or {}
-        info = self.model._meta.app_label, self.model._meta.model_name
         extra_context.update(
-            object_tools=self.get_object_tools(request).values(),
-            object_tool_referrer_url=request.get_full_path()
+            object_tools=tuple(map(
+                lambda o: object_tool_context(*o),
+                self.get_object_tools(request).values())),
+            object_tool_referrer_url=request.get_full_path(),
+            object_tool_referrer_view=self._get_request_view(request)
         )
         return extra_context
 

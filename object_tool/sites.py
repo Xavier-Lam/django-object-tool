@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 
+from django.conf import settings
+from django.contrib import admin
 from django.contrib.admin.sites import AdminSite
 
 
@@ -57,6 +59,27 @@ class CustomObjectToolAdminSiteMixin(object):
 
 class CustomObjectToolAdminSite(CustomObjectToolAdminSiteMixin, AdminSite):
     pass
+
+
+def patch_admin(patch_site=None, patch_modeladmin=None):
+    """replace default admin with object tool admin"""
+    if patch_site is None:
+        patch_site = getattr(settings, "OBJECT_TOOL_PATCHADMINSITE", True)
+    if patch_modeladmin is None:
+        patch_modeladmin = getattr(
+            settings, "OBJECT_TOOL_PATCHMODELADMIN", False)
+    if patch_modeladmin:
+        patch_site = True
+
+    if patch_site:
+        site._registry.update(admin.site._registry)
+        setattr(admin.sites, "site", site)
+        setattr(admin, "site", site)
+
+    if patch_modeladmin:
+        from .admin import CustomObjectToolModelAdmin
+        setattr(admin.ModelAdmin, CustomObjectToolModelAdmin)
+        setattr(admin.options.ModelAdmin, CustomObjectToolModelAdmin)
 
 
 site = CustomObjectToolAdminSite()

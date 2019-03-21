@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+
+{% load i18n l10n admin_urls %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} delete-confirmation
+  delete-selected-confirmation{% endblock %}
+
+{% block breadcrumbs %}
+  {% include "admin/object_tool/breadcrumbs.html" %}
+{% endblock %}
+
+{% block content %}
+<hr>
+<br>
+<div id="content-main">
+  <form action="{% url opts|admin_urlname:'objecttool' object_id %}" method="POST">{% csrf_token %}
+    {% if confirm_text %}<p>{{ confirm_text }}</p>{% endif %}
+    <input name="object-tool-referrer-url" type="hidden" value="{{ object_tool_referrer_url }}" />
+    <input name="object-tool-referrer-view" type="hidden" value="{{ object_tool_referrer_view }}" />
+    {{ form }}
+    <div class="submit-row">
+      <input type="hidden" name="object-tool" value="{{ object_tool.0 }}"/>
+      <input type="submit" name="confirm" value="{% trans "Confirm" %}"/>
+      <a href="#" onclick="window.history.back(); return false;"
+         class="button cancel-link">{% trans "No, take me back" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

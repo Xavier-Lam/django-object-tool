@@ -13,8 +13,9 @@ default_app_config = 'object_tool.apps.ObjectToolConfig'
 
 
 from .admin import CustomObjectToolModelAdmin, CustomObjectToolModelAdminMixin
-from .shortcuts import link_object_tool
-from .sites import CustomObjectToolAdminSite, CustomObjectToolAdminSiteMixin
+from .shortcuts import confirm, form, link
+from .sites import (
+    CustomObjectToolAdminSite, CustomObjectToolAdminSiteMixin, patch_admin)
 
 # shortnames
 ObjectToolModelAdmin = CustomObjectToolModelAdmin
