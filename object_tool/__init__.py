@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 __title__ = "django-object-tool"
 __description__ = "Django admin customize object tools support"
 __url__ = "https://github.com/Xavier-Lam/django-object-tool"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __author__ = "Xavier-Lam"
 __author_email__ = "Lam.Xavier@hotmail.com"
 

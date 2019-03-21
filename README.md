@@ -20,7 +20,6 @@
 - [Advanced usage](#advanced-usage)
   - [Site wide object tools](#site-wide-object-tools)
   - [Work with your own admin template](#work-with-your-own-admin-template)
-  - [Use in reusable apps](#use-in-reusable-apps)
   - [Ordering of object tools](#ordering-of-object-tools)
   - [Customize button styles](#customize-button-styles)
 - [Configurations](#configurations)
@@ -135,21 +134,9 @@ You can create a site wide object tool by register your object tool to the admin
 
 * template.html
 
-        {% extends 'admin/object_tool/object-tool-items.html %}
+        {% extends 'admin/object_tool/object-tool-items.html' %}
 
         ...your template code goes here...
-
-### Use in reusable apps
-You needn't add *object_tool* to *INSTALLED_APPS* in settings.py when you are writing a reusable app. You need do nothing if you don't want to replace django's default admin. If you want to replace the default admin site, you only need to call `object_tool.patch_admin` in the ready method of your app's config like this:
-
-    from django.apps import apps
-    from object_tool import patch_admin
-
-    class YourAppConfig(AppConfig):
-        name = "your_app"
-
-        def ready(self):
-            not apps.is_installed("object_tool") and patch_admin()
 
 ### Ordering of object tools
 Refer to the below table which lists the object tools' registration with the highest precedence at the top and lowest at the bottom.

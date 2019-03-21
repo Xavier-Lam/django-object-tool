@@ -51,7 +51,7 @@ class CustomObjectToolAdminSiteMixin(object):
         """
         Get all the enabled tools as an iterable of (name, func).
         """
-        rv = self._object_tools[""].items()
+        rv = list(self._object_tools[""].items())
         if view:
             rv.extend(self._object_tools[view].items())
         return rv
