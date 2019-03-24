@@ -13,14 +13,14 @@
 <hr>
 <br>
 <div id="content-main">
-  <form action="{% url opts|admin_urlname:'objecttool' object_id %}" method="POST">{% csrf_token %}
+  <form method="POST">{% csrf_token %}
     {% if confirm_text %}<p>{{ confirm_text }}</p>{% endif %}
     <input name="object-tool-referrer-url" type="hidden" value="{{ object_tool_referrer_url }}" />
     <input name="object-tool-referrer-view" type="hidden" value="{{ object_tool_referrer_view }}" />
     {{ form }}
     <div class="submit-row">
       <input type="hidden" name="object-tool" value="{{ object_tool.0 }}"/>
-      <input type="submit" name="confirm" value="{% trans "Confirm" %}"/>
+      <input type="submit" name="confirm" value="{% trans "Yes, I'm sure" %}"/>
       <a href="#" onclick="window.history.back(); return false;"
          class="button cancel-link">{% trans "No, take me back" %}</a>
     </div>

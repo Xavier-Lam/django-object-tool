@@ -10,6 +10,7 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.utils import unquote
 from django.http import response
+from django.template.response import SimpleTemplateResponse
 from django.urls import resolve
 from django.utils.text import capfirst
 
@@ -38,7 +39,7 @@ class CustomObjectToolModelAdminMixin(object):
         return getattr(parent, "change_list_template", None)\
             or "admin/change_list.html"
 
-    change_list_template = "admin/object_tool/object-tool-items.html"
+    change_list_template = "admin/object_tool/baseview.html"
 
     @property
     def _base_change_form_template(self):
@@ -46,7 +47,7 @@ class CustomObjectToolModelAdminMixin(object):
         return getattr(parent, "change_form_template", None)\
             or "admin/change_form.html"
 
-    change_form_template = "admin/object_tool/object-tool-items.html"
+    change_form_template = "admin/object_tool/baseview.html"
 
     def get_urls(self):
         urlpatterns = super(CustomObjectToolModelAdminMixin, self).get_urls()
@@ -165,7 +166,7 @@ class CustomObjectToolModelAdminMixin(object):
             description = capfirst(object_tool.replace("_", " "))
         return func, object_tool, description
 
-    def response_object_tool(self, request, obj=None):
+    def response_object_tool(self, request, obj=None, extra_context=None):
         """
         Handle an admin object tool.
         """
@@ -173,6 +174,10 @@ class CustomObjectToolModelAdminMixin(object):
         object_tool = object_tools[request.POST["object-tool"]]
         func = object_tool[0]
         rv = func(self, request, obj)
+        if isinstance(rv, SimpleTemplateResponse):
+            rv.context_data = rv.context_data or dict()
+            rv.context_data.update(extra_context)
+            return rv
         if isinstance(rv, response.HttpResponseBase):
             return rv
         else:
@@ -180,7 +185,7 @@ class CustomObjectToolModelAdminMixin(object):
             return response.HttpResponseRedirect(redirect_url)
 
     @csrf_protect_m
-    def object_tool_view(self, request, object_id=None):
+    def object_tool_view(self, request, object_id=None, extra_context=None):
         # handle object tool behaviors
         if "object-tool" not in request.POST:
             return response.HttpResponseBadRequest()
@@ -195,7 +200,7 @@ class CustomObjectToolModelAdminMixin(object):
             return response.HttpResponseNotAllowed()
 
         obj = object_id and self.get_object(request, unquote(object_id))
-        return self.response_object_tool(request, obj)
+        return self.response_object_tool(request, obj, extra_context)
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):

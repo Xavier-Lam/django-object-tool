@@ -9,26 +9,27 @@
 
 ![](docs/static/images/example.jpg?raw=true)
 
-- [Quick Start](#quick-start)
-  - [Installation](#installation)
-  - [Write your first admin](#write-your-first-admin)
-  - [Specific view only object tools](#specific-view-only-object-tools)
-  - [Shortcuts](#shortcuts)
-    - [Shortcut for hyperlinks](#shortcut-for-hyperlinks)
-    - [Execute after confirmation](#execute-after-confirmation)
-    - [Create a form](#create-a-form)
-- [Advanced usage](#advanced-usage)
-  - [Site wide object tools](#site-wide-object-tools)
-  - [Work with your own admin template](#work-with-your-own-admin-template)
-  - [Ordering of object tools](#ordering-of-object-tools)
-  - [Customize button styles](#customize-button-styles)
-- [Configurations](#configurations)
-- [Compatibilities](#compatibilities)
-  - [django-import-export](#django-import-export)
-- [Example app](#example-app)
-- [TODOS](#todos)
-- [Change logs](#change-logs)
-  - [0.0.1](#001)
+- [Django-object-tool](#django-object-tool)
+  - [Quick Start](#quick-start)
+    - [Installation](#installation)
+    - [Write your first admin](#write-your-first-admin)
+    - [Specific view only object tools](#specific-view-only-object-tools)
+    - [Shortcuts](#shortcuts)
+      - [Shortcut for hyperlinks](#shortcut-for-hyperlinks)
+      - [Execute after confirmation](#execute-after-confirmation)
+      - [Create a form](#create-a-form)
+  - [Advanced usage](#advanced-usage)
+    - [Site wide object tools](#site-wide-object-tools)
+    - [Work with your own admin template](#work-with-your-own-admin-template)
+    - [Ordering of object tools](#ordering-of-object-tools)
+    - [Customize button styles](#customize-button-styles)
+  - [Configurations](#configurations)
+  - [Compatibilities](#compatibilities)
+    - [django-import-export](#django-import-export)
+  - [Example app](#example-app)
+  - [TODOS](#todos)
+  - [Change logs](#change-logs)
+    - [0.0.1](#001)
 
 ## Quick Start
 ### Installation
@@ -134,7 +135,7 @@ You can create a site wide object tool by register your object tool to the admin
 
 * template.html
 
-        {% extends 'admin/object_tool/object-tool-items.html' %}
+        {% extends 'admin/object_tool/baseview.html' %}
 
         ...your template code goes here...
 

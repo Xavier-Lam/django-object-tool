@@ -5,6 +5,7 @@ from functools import wraps
 
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
+from django.utils.translation import ugettext_lazy as _
 
 from .utils import object_tool_context, OBJECTTOOL_ALLOWED_PROPERTIES
 
@@ -31,7 +32,7 @@ def link(url, short_description, **kwargs):
     return wrapper
 
 
-def form(form_class, short_description, template=None, confirm="confirm", **kwargs):
+def form(form_class, short_description="", template=None, confirm="confirm", **kwargs):
     """
     A short cut for generate form view
 
@@ -49,6 +50,7 @@ def form(form_class, short_description, template=None, confirm="confirm", **kwar
     """
     def decorator(func):
         name = kwargs.pop("__name__", None) or func.__name__
+        title = short_description or name
 
         @wraps(func)
         def wrapper(modeladmin, request, obj=None):
@@ -59,24 +61,28 @@ def form(form_class, short_description, template=None, confirm="confirm", **kwar
                 if form.is_valid():
                     return func(modeladmin, request, form, obj)
 
+            # TODO: should be redirect to GET
             context = dict(
                 modeladmin.admin_site.each_context(request),
                 action=name,
                 opts=modeladmin.model._meta,
                 form=form,
-                title=short_description,
+                title=title,
                 obj=obj,
                 object_id=obj and obj.pk,
                 object_tool=object_tool_context(
-                    func, name, short_description),
+                    func, name, title),
                 object_tool_referrer_url=request.POST["object-tool-referrer-url"],
                 object_tool_referrer_view=request.POST["object-tool-referrer-view"]
             )
 
-            return TemplateResponse(
-                request, template or "admin/object_tool/form.html", context)
+            template_ = template or\
+                getattr(modeladmin, "objecttool_form_template", None) or\
+                "admin/object_tool/form.html"
 
-        kwargs["short_description"] = short_description
+            return TemplateResponse(request, template_, context)
+
+        kwargs["short_description"] = title
         kwargs["allow_get"] = True
         for key, value in kwargs.items():
             if key in OBJECTTOOL_ALLOWED_PROPERTIES:
@@ -87,7 +93,7 @@ def form(form_class, short_description, template=None, confirm="confirm", **kwar
     return decorator
 
 
-def confirm(text, short_description, template=None, confirm="confirm", **kwargs):
+def confirm(text=None, short_description="", template=None, confirm="confirm", **kwargs):
     """
     A shortcut for confirm page
 
@@ -95,32 +101,39 @@ def confirm(text, short_description, template=None, confirm="confirm", **kwargs)
         def confirm_action(self, request, obj=None):
             pass
     """
+    text = text or _("Are you sure?")
+
     def decorator(func):
         name = kwargs.pop("__name__", None) or func.__name__
+        title = short_description or name
 
         @wraps(func)
         def wrapper(modeladmin, request, obj=None):
             if request.method == "POST" and request.POST.get(confirm):
                 return func(modeladmin, request, obj)
 
+            # TODO: should be redirect to GET
             context = dict(
                 modeladmin.admin_site.each_context(request),
                 action=name,
                 opts=modeladmin.model._meta,
                 confirm_text=text % dict(obj=obj or ""),
-                title=short_description,
+                title=title,
                 obj=obj,
                 object_id=obj and obj.pk,
                 object_tool=object_tool_context(
-                    func, name, short_description),
+                    func, name, title),
                 object_tool_referrer_url=request.POST["object-tool-referrer-url"],
                 object_tool_referrer_view=request.POST["object-tool-referrer-view"]
             )
 
-            return TemplateResponse(
-                request, template or "admin/object_tool/form.html", context)
+            template_ = template or\
+                getattr(modeladmin, "objecttool_form_template", None) or\
+                "admin/object_tool/form.html"
 
-        kwargs["short_description"] = short_description
+            return TemplateResponse(request, template_, context)
+
+        kwargs["short_description"] = title
         kwargs["allow_get"] = True
         for key, value in kwargs.items():
             if key in OBJECTTOOL_ALLOWED_PROPERTIES:
