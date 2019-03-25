@@ -32,7 +32,7 @@ def link(url, short_description, **kwargs):
     return wrapper
 
 
-def form(form_class, short_description="", template=None, confirm="confirm", **kwargs):
+def form(form_class, short_description="", template=None, confirm_field="confirm", **kwargs):
     """
     A short cut for generate form view
 
@@ -48,52 +48,12 @@ def form(form_class, short_description="", template=None, confirm="confirm", **k
             def text(self, request, form, obj=None):
                 pass
     """
-    def decorator(func):
-        name = kwargs.pop("__name__", None) or func.__name__
-        title = short_description or name
-
-        @wraps(func)
-        def wrapper(modeladmin, request, obj=None):
-            form = form_class()
-
-            if request.method == "POST" and request.POST.get(confirm):
-                form = form_class(request.POST)
-                if form.is_valid():
-                    return func(modeladmin, request, form, obj)
-
-            # TODO: should be redirect to GET
-            context = dict(
-                modeladmin.admin_site.each_context(request),
-                action=name,
-                opts=modeladmin.model._meta,
-                form=form,
-                title=title,
-                obj=obj,
-                object_id=obj and obj.pk,
-                object_tool=object_tool_context(
-                    func, name, title),
-                object_tool_referrer_url=request.POST["object-tool-referrer-url"],
-                object_tool_referrer_view=request.POST["object-tool-referrer-view"]
-            )
-
-            template_ = template or\
-                getattr(modeladmin, "objecttool_form_template", None) or\
-                "admin/object_tool/form.html"
-
-            return TemplateResponse(request, template_, context)
-
-        kwargs["short_description"] = title
-        kwargs["allow_get"] = True
-        for key, value in kwargs.items():
-            if key in OBJECTTOOL_ALLOWED_PROPERTIES:
-                setattr(wrapper, key, value)
-
-        return wrapper
-
-    return decorator
+    return _confirm_view(
+        form_class=form_class, short_description=short_description,
+        template=template, confirm_field=confirm_field, **kwargs)
 
 
-def confirm(text=None, short_description="", template=None, confirm="confirm", **kwargs):
+def confirm(text=None, short_description="", template=None, confirm_field="confirm", **kwargs):
     """
     A shortcut for confirm page
 
@@ -102,29 +62,41 @@ def confirm(text=None, short_description="", template=None, confirm="confirm", *
             pass
     """
     text = text or _("Are you sure?")
+    return _confirm_view(
+        confirm_text=text, short_description=short_description,
+        template=template, confirm_field=confirm_field, **kwargs)
 
+
+def _confirm_view(form_class=None, short_description="", template=None, confirm_text="", confirm_field="confirm", **kwargs):
     def decorator(func):
         name = kwargs.pop("__name__", None) or func.__name__
         title = short_description or name
 
         @wraps(func)
         def wrapper(modeladmin, request, obj=None):
-            if request.method == "POST" and request.POST.get(confirm):
-                return func(modeladmin, request, obj)
+            form = None
 
-            # TODO: should be redirect to GET
+            if request.method == "POST" and request.POST.get(confirm_field):
+                form = form_class and form_class(request.POST)
+                if not form or form.is_valid():
+                    return func(modeladmin, request, form, obj) if form\
+                        else func(modeladmin, request, obj)
+            else:
+                form = form_class and form_class()
+
             context = dict(
                 modeladmin.admin_site.each_context(request),
                 action=name,
                 opts=modeladmin.model._meta,
-                confirm_text=text % dict(obj=obj or ""),
+                confirm_text=confirm_text % dict(obj=obj or ""),
+                form=form,
                 title=title,
                 obj=obj,
                 object_id=obj and obj.pk,
                 object_tool=object_tool_context(
                     func, name, title),
-                object_tool_referrer_url=request.POST["object-tool-referrer-url"],
-                object_tool_referrer_view=request.POST["object-tool-referrer-view"]
+                object_tool_referrer_url=request.POST.get(
+                    "object-tool-referrer-url", request.META["HTTP_REFERER"])
             )
 
             template_ = template or\

@@ -13,6 +13,7 @@ from django.http import response
 from django.template.response import SimpleTemplateResponse
 from django.urls import resolve
 from django.utils.text import capfirst
+from six.moves.urllib.parse import urlparse
 
 from .sites import CustomObjectToolAdminSiteMixin
 from .utils import object_tool_context
@@ -35,6 +36,7 @@ class CustomObjectToolModelAdminMixin(object):
 
     @property
     def _base_change_list_template(self):
+        """parent change list template"""
         parent = super(CustomObjectToolModelAdminMixin, self)
         return getattr(parent, "change_list_template", None)\
             or "admin/change_list.html"
@@ -43,6 +45,7 @@ class CustomObjectToolModelAdminMixin(object):
 
     @property
     def _base_change_form_template(self):
+        """parent change form template"""
         parent = super(CustomObjectToolModelAdminMixin, self)
         return getattr(parent, "change_form_template", None)\
             or "admin/change_form.html"
@@ -61,29 +64,32 @@ class CustomObjectToolModelAdminMixin(object):
         info = self.model._meta.app_label, self.model._meta.model_name
         urlpatterns = [
             url(
-                r"^objecttool/(.+)?$",
+                r"^(?:(?P<object_id>.+)/)?objecttool/(?P<action_name>.+)/$",
                 wrap(self.object_tool_view),
                 name="%s_%s_objecttool" % info
             )
         ] + urlpatterns
         return urlpatterns
 
-    def _get_request_view(self, request):
-        """util for get request view"""
+    def _get_view_name(self, request):
+        """get request url name, returns 'changelist' or 'change'"""
+        pattern = "_([^_]+?)$"
         url_name = resolve(request.path_info).url_name
-        match = re.search("_([^_]+?)$", url_name)
+        match = re.search(pattern, url_name)
         view = match.group(1)
         if view == "objecttool":
-            view = request.POST["object-tool-referrer-view"]
+            referrer = request.POST.get(
+                "object-tool-referrer-url", request.META["HTTP_REFERER"])
+            url_name = resolve(urlparse(referrer).path).url_name
+            match = re.search(pattern, url_name)
+            view = match.group(1)
         return view
 
     def _get_base_object_tools(self, request):
-        """
-        Return the list of object tools
-        """
+        """return the list of object tools"""
         object_tools = []
 
-        view = self._get_request_view(request)
+        view = self._get_view_name(request)
 
         # Gather object tools from the admin site first
         if isinstance(self.admin_site, CustomObjectToolAdminSiteMixin):
@@ -166,46 +172,40 @@ class CustomObjectToolModelAdminMixin(object):
             description = capfirst(object_tool.replace("_", " "))
         return func, object_tool, description
 
-    def response_object_tool(self, request, obj=None, extra_context=None):
-        """
-        Handle an admin object tool.
-        """
-        object_tools = self.get_object_tools(request)
-        object_tool = object_tools[request.POST["object-tool"]]
-        func = object_tool[0]
-        rv = func(self, request, obj)
+    def response_object_tool(self, request, action, obj=None, extra_context=None):
+        """Handle an admin object tool"""
+        rv = action(self, request, obj)
         if isinstance(rv, SimpleTemplateResponse):
             rv.context_data = rv.context_data or dict()
-            rv.context_data.update(extra_context)
+            extra_context and rv.context_data.update(extra_context)
             return rv
-        if isinstance(rv, response.HttpResponseBase):
+        elif isinstance(rv, response.HttpResponseBase):
             return rv
         else:
-            redirect_url = request.POST["object-tool-referrer-url"]
+            redirect_url = request.POST.get(
+                "object-tool-referrer-url", request.META["HTTP_REFERER"])
             return response.HttpResponseRedirect(redirect_url)
 
     @csrf_protect_m
-    def object_tool_view(self, request, object_id=None, extra_context=None):
-        # handle object tool behaviors
-        if "object-tool" not in request.POST:
-            return response.HttpResponseBadRequest()
-
-        name = request.POST["object-tool"]
-        if name not in self.get_object_tools(request):
+    def object_tool_view(self, request, action_name, object_id=None, extra_context=None):
+        if action_name not in self.get_object_tools(request):
             return response.HttpResponseForbidden()
 
-        object_tool = self.get_object_tool(name)
-        allow_get = not getattr(object_tool, "allow_get", False)
+        action = self.get_object_tool(action_name)[0]
+        allow_get = getattr(action, "allow_get", False)
         if not allow_get and request.method != "POST":
             return response.HttpResponseNotAllowed()
 
         obj = object_id and self.get_object(request, unquote(object_id))
-        return self.response_object_tool(request, obj, extra_context)
+        return self.response_object_tool(request, action, obj, extra_context)
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
         extra_context = self._prepare_object_tool_view(request, extra_context)
         extra_context.update(
+            object_tools=tuple(map(
+                lambda o: object_tool_context(*o),
+                self.get_object_tools(request).values())),
             object_tool_base_template=self._base_change_list_template
         )
         return super(CustomObjectToolModelAdminMixin, self).changelist_view(
@@ -215,6 +215,9 @@ class CustomObjectToolModelAdminMixin(object):
     def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
         extra_context = self._prepare_object_tool_view(request, extra_context)
         extra_context.update(
+            object_tools=tuple(map(
+                lambda o: object_tool_context(*o),
+                self.get_object_tools(request).values())),
             object_tool_base_template=self._base_change_form_template
         )
         return super(CustomObjectToolModelAdminMixin, self).changeform_view(
@@ -223,13 +226,6 @@ class CustomObjectToolModelAdminMixin(object):
     def _prepare_object_tool_view(self, request, extra_context=None):
         # update context
         extra_context = extra_context or {}
-        extra_context.update(
-            object_tools=tuple(map(
-                lambda o: object_tool_context(*o),
-                self.get_object_tools(request).values())),
-            object_tool_referrer_url=request.get_full_path(),
-            object_tool_referrer_view=self._get_request_view(request)
-        )
         return extra_context
 
 

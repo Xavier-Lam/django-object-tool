@@ -68,8 +68,7 @@ def patch_admin(patch_site=None, patch_modeladmin=None):
     if patch_modeladmin is None:
         patch_modeladmin = getattr(
             settings, "OBJECT_TOOL_PATCHMODELADMIN", False)
-    if patch_modeladmin:
-        patch_site = True
+    patch_site = patch_modeladmin or patch_site
 
     if patch_site:
         site._registry.update(admin.site._registry)

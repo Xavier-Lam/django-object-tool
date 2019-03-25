@@ -9,27 +9,26 @@
 
 ![](docs/static/images/example.jpg?raw=true)
 
-- [Django-object-tool](#django-object-tool)
-  - [Quick Start](#quick-start)
-    - [Installation](#installation)
-    - [Write your first admin](#write-your-first-admin)
-    - [Specific view only object tools](#specific-view-only-object-tools)
-    - [Shortcuts](#shortcuts)
-      - [Shortcut for hyperlinks](#shortcut-for-hyperlinks)
-      - [Execute after confirmation](#execute-after-confirmation)
-      - [Create a form](#create-a-form)
-  - [Advanced usage](#advanced-usage)
-    - [Site wide object tools](#site-wide-object-tools)
-    - [Work with your own admin template](#work-with-your-own-admin-template)
-    - [Ordering of object tools](#ordering-of-object-tools)
-    - [Customize button styles](#customize-button-styles)
-  - [Configurations](#configurations)
-  - [Compatibilities](#compatibilities)
-    - [django-import-export](#django-import-export)
-  - [Example app](#example-app)
-  - [TODOS](#todos)
-  - [Change logs](#change-logs)
-    - [0.0.1](#001)
+- [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Write your first admin](#write-your-first-admin)
+  - [Specific view only object tools](#specific-view-only-object-tools)
+  - [Shortcuts](#shortcuts)
+    - [Shortcut for hyperlinks](#shortcut-for-hyperlinks)
+    - [Execute after confirmation](#execute-after-confirmation)
+    - [Create a form](#create-a-form)
+- [Advanced usage](#advanced-usage)
+  - [Site wide object tools](#site-wide-object-tools)
+  - [Work with your own admin template](#work-with-your-own-admin-template)
+  - [Ordering of object tools](#ordering-of-object-tools)
+  - [Customize button styles](#customize-button-styles)
+- [Configurations](#configurations)
+- [Compatibilities](#compatibilities)
+  - [django-import-export](#django-import-export)
+- [Example app](#example-app)
+- [TODOS](#todos)
+- [Change logs](#change-logs)
+  - [0.0.1](#001)
 
 ## Quick Start
 ### Installation
@@ -142,14 +141,12 @@ You can create a site wide object tool by register your object tool to the admin
 ### Ordering of object tools
 Refer to the below table which lists the object tools' registration with the highest precedence at the top and lowest at the bottom.
 
-| registration |
-| --- |
-| admin site global tools |
-| admin site global specify view tools |
-| tools defined in parent model admins |
-| specify view tools defined in parent model admins |
-| tools defined in current model admin |
-| specify view tools defined in current model admin |
+* admin site global tools
+* admin site global specify view tools
+* tools defined in parent model admins
+* specify view tools defined in parent model admins
+* tools defined in current model admin
+* specify view tools defined in current model admin
 
 ### Customize button styles
 Assign *classes* property to object tool action can add classes to the object tool button.
@@ -182,6 +179,7 @@ Then visit ***http://127.0.0.1:8000/admin*** and login as super admin by using a
 
 ## TODOS
 * unittests
+* permissions
 * [django-import-export](https://github.com/django-import-export/django-import-export/tree/master/import_export) compatibility
 
 ## Change logs

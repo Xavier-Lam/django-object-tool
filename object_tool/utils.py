@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 
 OBJECTTOOL_ALLOWED_PROPERTIES = (
-    "__name__", "classes", "help_text", "short_description")
+    "__name__", "allow_get", "classes", "help_text", "short_description")
 
 
 def object_tool_context(func, name, short_description):

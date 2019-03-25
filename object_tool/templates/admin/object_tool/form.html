@@ -16,8 +16,7 @@
   <form method="POST">{% csrf_token %}
     {% if confirm_text %}<p>{{ confirm_text }}</p>{% endif %}
     <input name="object-tool-referrer-url" type="hidden" value="{{ object_tool_referrer_url }}" />
-    <input name="object-tool-referrer-view" type="hidden" value="{{ object_tool_referrer_view }}" />
-    {{ form }}
+    {% if form %}{{ form }}{% endif %}
     <div class="submit-row">
       <input type="hidden" name="object-tool" value="{{ object_tool.0 }}"/>
       <input type="submit" name="confirm" value="{% trans "Yes, I'm sure" %}"/>

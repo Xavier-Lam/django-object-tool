@@ -11,7 +11,7 @@ from .models import User
 
 
 class Form(forms.Form):
-    text = forms.CharField()
+    text = forms.CharField(required=True)
 
 
 class UserAdmin(CustomObjectToolModelAdminMixin, admin.ModelAdmin):

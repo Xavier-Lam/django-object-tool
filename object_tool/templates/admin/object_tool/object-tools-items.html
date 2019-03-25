@@ -1,19 +1,18 @@
 {% load admin_urls i18n %}
 
-<form action="{% url opts|admin_urlname:'objecttool' object_id %}" method="POST">
-    {% csrf_token %}
-    <input name="object-tool-referrer-url" type="hidden" value="{{ object_tool_referrer_url }}" />
-    <input name="object-tool-referrer-view" type="hidden" value="{{ object_tool_referrer_view }}" />
-    {% for object_tool in object_tools %}
-    <li>
-        <a href="javascript:;"
+{% for object_tool in object_tools %}
+<li>
+    <form action="{% if object_id %}{% url opts|admin_urlname:'objecttool' action_name=object_tool.0 object_id=object_id %}{% else %}{% url opts|admin_urlname:'objecttool' action_name=object_tool.0 %}{% endif %}"
+        method="{% if object_tool.1.allow_get %}GET{% else %}POST{% endif %}">
+        {% if not object_tool.1.allow_get %}
+        {% csrf_token %}
+        {% endif %}
+        <button id="object-tool-button-{{ object_tool.0 }}" type="submit"
             {% if object_tool.1.classes %}class="{{ object_tool.1.classes }}"{% endif %} 
             {% if object_tool.1.help_text %}title="{{ object_tool.1.help_text }}"{% endif %} 
         >
-            <button name="object-tool" type="submit" value="{{ object_tool.0 }}">
-                {% trans object_tool.1.short_description %}
-            </button>
-        </a>
-    </li>
-    {% endfor %}
-</form>
+            {% trans object_tool.1.short_description %}
+        </button>
+    </form>
+</li>
+{% endfor %}

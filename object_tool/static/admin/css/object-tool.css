@@ -1,10 +1,48 @@
 .object-tools form { display: inline }
-.object-tools a>button {
-    background: transparent;
-    border: none;
+
+.object-tools button {
+    display: block;
+    float: left;
+    padding: 3px 12px;
+    background: #999;
+    font-weight: 400;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: #fff;
-    cursor: pointer;
+    border-radius: 15px;
+    border: none;
+    line-height: 20px;
+    cursor: pointer
 }
-.object-tools a>button:focus {
+
+.object-tools button:focus, .object-tools button:hover {
+    background-color: #417690;
     outline: none
+}
+
+
+.object-tools a:focus, .object-tools a:hover {
+    background-color: #417690;
+}
+
+.object-tools a:focus{
+    text-decoration: none;
+}
+
+.object-tools button.viewsitelink,
+.object-tools button.golink,
+.object-tools button.addlink {
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    padding-right: 26px;
+}
+
+.object-tools button.viewsitelink,
+.object-tools button.golink {
+    background-image: url(../img/tooltag-arrowright.svg);
+}
+
+.object-tools button.addlink {
+    background-image: url(../img/tooltag-add.svg);
 }
