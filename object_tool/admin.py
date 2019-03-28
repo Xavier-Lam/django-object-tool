@@ -203,9 +203,6 @@ class CustomObjectToolModelAdminMixin(object):
     def changelist_view(self, request, extra_context=None):
         extra_context = self._prepare_object_tool_view(request, extra_context)
         extra_context.update(
-            object_tools=tuple(map(
-                lambda o: object_tool_context(*o),
-                self.get_object_tools(request).values())),
             object_tool_base_template=self._base_change_list_template
         )
         return super(CustomObjectToolModelAdminMixin, self).changelist_view(
@@ -215,9 +212,6 @@ class CustomObjectToolModelAdminMixin(object):
     def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
         extra_context = self._prepare_object_tool_view(request, extra_context)
         extra_context.update(
-            object_tools=tuple(map(
-                lambda o: object_tool_context(*o),
-                self.get_object_tools(request).values())),
             object_tool_base_template=self._base_change_form_template
         )
         return super(CustomObjectToolModelAdminMixin, self).changeform_view(
@@ -226,6 +220,11 @@ class CustomObjectToolModelAdminMixin(object):
     def _prepare_object_tool_view(self, request, extra_context=None):
         # update context
         extra_context = extra_context or {}
+        extra_context.update(
+            object_tools=tuple(map(
+                lambda o: object_tool_context(*o),
+                self.get_object_tools(request).values()))
+        )
         return extra_context
 
 

@@ -20,6 +20,7 @@
 - [Advanced usage](#advanced-usage)
   - [Site wide object tools](#site-wide-object-tools)
   - [Work with your own admin template](#work-with-your-own-admin-template)
+  - [Use in reusable apps](#use-in-reusable-apps)
   - [Ordering of object tools](#ordering-of-object-tools)
   - [Customize button styles](#customize-button-styles)
 - [Configurations](#configurations)
@@ -137,6 +138,18 @@ You can create a site wide object tool by register your object tool to the admin
         {% extends 'admin/object_tool/baseview.html' %}
 
         ...your template code goes here...
+
+
+### Use in reusable apps
+You may run `object_tool.ObjectToolConfig.register()` in your reusable app's ready method. By doing this, users who use your reusable app needn't to add `object_tool` to their INSTALLED_APPS.
+
+    class AppConfig(AppConfig):
+        name = 'app'
+
+        def ready(self):
+            import object_tool
+            object_tool.ObjectToolConfig.register()
+
 
 ### Ordering of object tools
 Refer to the below table which lists the object tools' registration with the highest precedence at the top and lowest at the bottom.
