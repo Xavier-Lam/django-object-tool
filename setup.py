@@ -28,7 +28,7 @@ setup(
     author_email=package["__author_email__"],
     url=package["__url__"],
     packages=find_packages(),
-    keywords="django, object-tool, object-tools, administration",
+    keywords=["django", "object-tool", "object-tools", "administration"],
     description=package["__description__"],
     long_description=long_description,
     long_description_content_type="text/markdown",
