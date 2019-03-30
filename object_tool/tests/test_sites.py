@@ -10,7 +10,7 @@ class SiteTestCase(ObjectToolTestCase):
         def make_tool(funcname):
             def func():
                 pass
-            func.__name__ = funcname
+            func.__name__ = str(funcname)
             return func
 
         global_tool = make_tool("global_tool")

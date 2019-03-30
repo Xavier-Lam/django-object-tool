@@ -25,10 +25,11 @@ class ObjectToolConfig(AppConfig):
         template_engine = Engine.get_default()
         loader = "object_tool.template.loaders.Loader"
         if loader not in template_engine.loaders:
-            template_engine.loaders.append(loader)
+            template_engine.loaders = list(template_engine.loaders) + [loader]
 
         # add static dir to settings
         static_dir = os.path.join(BASE_DIR, "static")
-        static_dirs = settings.STATICFILES_DIRS
+        static_dirs = list(settings.STATICFILES_DIRS)
         if static_dir not in static_dirs:
-            settings.STATICFILES_DIRS.append(static_dir)
+            static_dirs.append(static_dir)
+        settings.STATICFILES_DIRS = static_dirs
