@@ -70,13 +70,14 @@ def patch_admin(patch_site=None, patch_modeladmin=None):
             settings, "OBJECT_TOOL_PATCHMODELADMIN", False)
     patch_site = patch_modeladmin or patch_site
 
-    if patch_site:
+    if patch_site and not isinstance(admin.site, CustomObjectToolAdminSiteMixin):
         site._registry.update(admin.site._registry)
         setattr(admin.sites, "site", site)
         setattr(admin, "site", site)
 
-    if patch_modeladmin:
-        from .admin import CustomObjectToolModelAdmin
+    from .admin import (
+        CustomObjectToolModelAdmin, CustomObjectToolModelAdminMixin)
+    if patch_modeladmin and not issubclass(admin.ModelAdmin, CustomObjectToolModelAdminMixin):
         setattr(admin.ModelAdmin, CustomObjectToolModelAdmin)
         setattr(admin.options.ModelAdmin, CustomObjectToolModelAdmin)
 

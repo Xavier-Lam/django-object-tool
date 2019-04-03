@@ -141,7 +141,7 @@ You can create a site wide object tool by register your object tool to the admin
 
 
 ### Use in reusable apps
-You may run `object_tool.ObjectToolConfig.register()` in your reusable app's ready method. By doing this, users who use your reusable app needn't to add `object_tool` to their INSTALLED_APPS.
+You may run `object_tool.ObjectToolConfig.register()` in your reusable app's ready method. By doing this, users who use your reusable app needn't to add `object_tool` to their INSTALLED_APPS. By default this will not replace the default admin site and modeladmin, you need inherit your modeladmin class from `object_tool.ObjectToolModelAdminMixin`, if you still want to replace the default modeladmin, you need pass True to the register method, but we don't recommend you to do so, this have a side-effect on other apps your installed.
 
     class AppConfig(AppConfig):
         name = 'app'

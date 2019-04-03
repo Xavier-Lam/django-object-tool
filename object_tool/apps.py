@@ -17,7 +17,7 @@ class ObjectToolConfig(AppConfig):
         patch_admin()
 
     @classmethod
-    def register(cls, module=None):
+    def register(cls, ready=False):
         """register object-tool without add to INSTALLED_APPS"""
         from . import BASE_DIR
 
@@ -33,3 +33,6 @@ class ObjectToolConfig(AppConfig):
         if static_dir not in static_dirs:
             static_dirs.append(static_dir)
         settings.STATICFILES_DIRS = static_dirs
+
+        ready and cls.ready(None)
+
