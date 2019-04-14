@@ -19,10 +19,11 @@ class UserAdmin(CustomObjectToolModelAdminMixin, admin.ModelAdmin):
     changelist_object_tools = ("forkme", )
 
     list_display = ("name", "handsome")
+    search_fields = ("name",)
 
     forkme = object_tool.link(
         "https://github.com/Xavier-Lam/django-object-tool",
-        "Fork me on github", classes="viewsitelink")
+        "Fork me on github", classes="viewsitelink", target="_blank")
 
     @object_tool.form(Form, "greetings")
     def greetings(self, request, form, obj=None):

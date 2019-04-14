@@ -8,12 +8,13 @@ import re
 from django.conf.urls import url
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.options import csrf_protect_m
+from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.admin.utils import unquote
 from django.http import response
 from django.template.response import SimpleTemplateResponse
-from django.urls import resolve
+from django.urls import NoReverseMatch, resolve, reverse
 from django.utils.text import capfirst
-from six.moves.urllib.parse import urlparse
+from six.moves.urllib.parse import parse_qsl, urlparse
 
 from .sites import CustomObjectToolAdminSiteMixin
 from .utils import object_tool_context
@@ -78,12 +79,38 @@ class CustomObjectToolModelAdminMixin(object):
         match = re.search(pattern, url_name)
         view = match.group(1)
         if view == "objecttool":
-            referrer = request.POST.get(
-                "object-tool-referrer-url", request.META["HTTP_REFERER"])
+            referrer = self._get_post_objecttool_url(request)
             url_name = resolve(urlparse(referrer).path).url_name
             match = re.search(pattern, url_name)
             view = match.group(1)
         return view
+
+    def _get_post_objecttool_url(self, request):
+        """get redirect url after complete objecttool action"""
+        rv = request.META.get("HTTP_REFERRER")
+        if not rv:
+            opts = self.model._meta
+            obj_id = resolve(request.path).kwargs.get("object_id")
+            if obj_id:
+                url_name = "admin:%s_%s_change" % (
+                    opts.app_label, opts.model_name)
+                try:
+                    post_url = reverse(
+                        url_name, current_app=self.admin_site.name,
+                        kwargs=dict(object_id=obj_id))
+                except NoReverseMatch:
+                    post_url = reverse(
+                        url_name, current_app=self.admin_site.name,
+                        args=(obj_id,))
+            else:
+                post_url = reverse("admin:%s_%s_changelist" %
+                    (opts.app_label, opts.model_name),
+                    current_app=self.admin_site.name)
+            preserved_filters = self.get_preserved_filters(request)
+            rv = add_preserved_filters(
+                {'preserved_filters': preserved_filters, 'opts': opts}, post_url
+            )
+        return rv
 
     def _get_base_object_tools(self, request):
         """return the list of object tools"""
@@ -182,8 +209,7 @@ class CustomObjectToolModelAdminMixin(object):
         elif isinstance(rv, response.HttpResponseBase):
             return rv
         else:
-            redirect_url = request.POST.get(
-                "object-tool-referrer-url", request.META["HTTP_REFERER"])
+            redirect_url = self._get_post_objecttool_url(request)
             return response.HttpResponseRedirect(redirect_url)
 
     @csrf_protect_m
@@ -203,7 +229,10 @@ class CustomObjectToolModelAdminMixin(object):
     def changelist_view(self, request, extra_context=None):
         extra_context = self._prepare_object_tool_view(request, extra_context)
         extra_context.update(
-            object_tool_base_template=self._base_change_list_template
+            object_tool_base_template=self._base_change_list_template,
+            changelist_filters=dict(
+                parse_qsl(self.get_preserved_filters(request))
+            ).get("_changelist_filters", "")
         )
         return super(CustomObjectToolModelAdminMixin, self).changelist_view(
             request, extra_context)
@@ -212,7 +241,10 @@ class CustomObjectToolModelAdminMixin(object):
     def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
         extra_context = self._prepare_object_tool_view(request, extra_context)
         extra_context.update(
-            object_tool_base_template=self._base_change_form_template
+            object_tool_base_template=self._base_change_form_template,
+            changelist_filters=dict(
+                parse_qsl(self.get_preserved_filters(request))
+            ).get("_changelist_filters", "")
         )
         return super(CustomObjectToolModelAdminMixin, self).changeform_view(
             request, object_id, form_url, extra_context)

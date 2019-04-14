@@ -25,6 +25,7 @@ def link(url, short_description, **kwargs):
 
     kwargs["short_description"] = short_description
     kwargs["allow_get"] = True
+    kwargs["href"] = url
     for key, value in kwargs.items():
         if key in OBJECTTOOL_ALLOWED_PROPERTIES:
             setattr(wrapper, key, value)
@@ -94,9 +95,7 @@ def _confirm_view(form_class=None, short_description="", template=None, confirm_
                 obj=obj,
                 object_id=obj and obj.pk,
                 object_tool=object_tool_context(
-                    func, name, title),
-                object_tool_referrer_url=request.POST.get(
-                    "object-tool-referrer-url", request.META["HTTP_REFERER"])
+                    func, name, title)
             )
 
             template_ = template or\
