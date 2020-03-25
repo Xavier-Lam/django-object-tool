@@ -78,7 +78,7 @@ def _confirm_view(form_class=None, short_description="", template=None, confirm_
             form = None
 
             if request.method == "POST" and request.POST.get(confirm_field):
-                form = form_class and form_class(request.POST)
+                form = form_class and form_class(request.POST, request.FILES)
                 if not form or form.is_valid():
                     return func(modeladmin, request, form, obj) if form\
                         else func(modeladmin, request, obj)
