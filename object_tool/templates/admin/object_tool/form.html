@@ -13,7 +13,7 @@
 <hr>
 <br>
 <div id="content-main">
-  <form method="POST">{% csrf_token %}
+  <form method="POST" enctype="multipart/form-data">{% csrf_token %}
     {% if confirm_text %}<p>{{ confirm_text }}</p>{% endif %}
     {% if form %}{{ form }}{% endif %}
     <div class="submit-row">
