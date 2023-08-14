@@ -5,7 +5,7 @@ from collections import OrderedDict
 from functools import update_wrapper
 import re
 
-from django.conf.urls import url
+from django.urls import re_path as url
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
