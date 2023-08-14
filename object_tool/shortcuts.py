@@ -5,7 +5,7 @@ from functools import wraps
 
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .utils import object_tool_context, OBJECTTOOL_ALLOWED_PROPERTIES
 
